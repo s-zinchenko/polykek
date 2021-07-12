@@ -2,6 +2,11 @@
   <main class="main">
     <v-popup v-if="modal"  v-on:close="close">
       <div class="popup-form">
+
+        <p>
+          <b>Поле "Описание" не может быть пустым</b>
+        </p>
+
         <button @click="close" class="popup-close">
           x
         </button>
@@ -9,6 +14,7 @@
         <input
           type="text"
           v-model="modalTitle"
+          required
           name="description"
           class="popup-field"
         />
@@ -28,6 +34,7 @@
         <button v-else @click="saveEdit" class="popup-save">
           Внести изменения
         </button>
+
       </div>
     </v-popup>
     <div class="container">
@@ -62,8 +69,21 @@ import vPopup from "./vPopup";
 export default {
   data() {
     return {
+      time_and_date: null,
+      options: {
+        era: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long',
+        timezone: 'UTC',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      },
       modal: false,
       modalid: null,
+      errors: [],
       modalTitle: "",
       editBool: false,
       editTitle: null,
@@ -111,9 +131,12 @@ export default {
         case "План":
           this.tasks.plan.todo.forEach((item) => {
             if (item.id === this.modalid) {
+              if(this.modalTitle) {
+
               item.description = this.modalTitle;
               item.lvl = this.modalLvl;
               return;
+              }
             }
           });
           this.modal = false;
@@ -122,9 +145,11 @@ export default {
         case "В работе":
           this.tasks.progress.todo.forEach((item) => {
             if (item.id === this.modalid) {
+              if (this.modalTitle){
               item.description = this.modalTitle;
               item.lvl = this.modalLvl;
               return;
+              }
             }
           });
           this.modal = false;
@@ -133,9 +158,11 @@ export default {
         case "Готово":
           this.tasks.complited.todo.forEach((item) => {
             if (item.id === this.modalid) {
+              if (this.modalTitle) {
               item.description = this.modalTitle;
               item.lvl = this.modalLvl;
               return;
+              }
             }
           });
           this.modal = false;
@@ -184,21 +211,31 @@ export default {
       localStorage.setItem("progress", JSON.stringify(this.tasks.progress));
     },
     save(arr) {
-      this.countTasks += 1;
-      const newTodo = {
+
+      if(this.modalTitle) {
+
+        this.time_and_date = new Date();
+
+
+
+        this.countTasks += 1;
+        const newTodo = {
         id: this.countTasks,
         lvl: this.modalLvl,
         description: this.modalTitle,
-        date: new Date(),
-      };
-      arr.push(newTodo);
-      localStorage.setItem(
+        date: this.time_and_date.toLocaleString("ru", this.options),
+        };
+        arr.push(newTodo);
+        localStorage.setItem(
         "plan",
         JSON.stringify({ title: "План", todo: arr })
-      );
-      this.modalLvl = 1;
-      this.modalTitle = "";
-      this.modal = false;
+        );
+        this.modalLvl = 1;
+        if(!this.modalTitle) this.errors.push("Description required.");
+        this.modalTitle = "";
+        this.modal = false;
+
+      }
     },
     close() {
       this.modal = false;
